@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_hue/constants/api_fields.dart';
 import 'package:flutter_swipe_button/flutter_swipe_button.dart';
+import 'package:flutter_web_auth/flutter_web_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:get/get.dart';
@@ -544,14 +545,33 @@ class HomeScreen extends GetView<HomeScreenController> {
                                       fontWeight: FontWeight.w500),
                                 ))),
                         onSwipe: () async {
-                          if (AppPreferences.instance.deviceListResponse ==
-                              null) {
-                            String url =
-                                "https://api.meethue.com/v2/oauth2/authorize?client_id=${AppUtility.clientId}&response_type=code&state=ACTIVE";
-                            if (!await launchUrl(Uri.parse(url))) {
-                              throw Exception('Could not launch $url');
-                            }
+                          // if (AppPreferences.instance.deviceListResponse ==
+                          //     null) {
+                          String url =
+                              "https://api.meethue.com/v2/oauth2/authorize?client_id=${AppUtility.clientId}&response_type=code&state=ACTIVE";
+
+                          final result = await FlutterWebAuth.authenticate(
+                            url: url,
+                            callbackUrlScheme: 'philips',
+                          );
+
+                          final responseUri = Uri.parse(result);
+
+                          if (responseUri.queryParameters
+                              .containsKey('error')) {
+                            Fluttertoast.showToast(
+                              msg:
+                                  'OAuth error: ${responseUri.queryParameters['error']}',
+                              toastLength: Toast.LENGTH_LONG,
+                              gravity: ToastGravity.BOTTOM,
+                              backgroundColor: Colors.red,
+                              textColor: Colors.white,
+                            );
                           } else {
+                            // if (!await launchUrl(Uri.parse(url))) {
+                            //   throw Exception('Could not launch $url');
+                            // }
+                            // } else {
                             controller.getDeviceDetailsAlone();
                           }
                         },

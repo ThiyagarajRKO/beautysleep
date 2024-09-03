@@ -332,7 +332,7 @@ class SpotifyController {
       var credentials = SpotifyApiCredentials(
           AppUtility.spotifyClientId, AppUtility.spotifyClientSecret);
       var grant = SpotifyApi.authorizationCodeGrant(credentials);
-      const redirectUri = 'philips://auth';
+      const redirectUri = 'beautysleep://auth';
 
       final authUri = grant.getAuthorizationUrl(
         Uri.parse(redirectUri),
@@ -341,7 +341,7 @@ class SpotifyController {
 
       final result = await FlutterWebAuth.authenticate(
         url: authUri.toString(),
-        callbackUrlScheme: 'philips',
+        callbackUrlScheme: 'beautysleep',
       );
 
       // Debug log for the result URL
