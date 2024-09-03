@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_hue/constants/api_fields.dart';
 import 'package:flutter_swipe_button/flutter_swipe_button.dart';
+import 'package:flutter_web_auth/flutter_web_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:get/get.dart';
@@ -42,7 +43,7 @@ class HomeScreen extends GetView<HomeScreenController> {
   @override
   Widget build(BuildContext context) {
     controller.context = context;
-    listenLink(controller);
+    // listenLink(controller);
     DateTime? startDate;
     DateTime? endDate;
     final RxString selectedText = RxString("");
@@ -549,9 +550,28 @@ class HomeScreen extends GetView<HomeScreenController> {
                             String url =
                                 "https://api.meethue.com/v2/oauth2/authorize?client_id=${AppUtility.clientId}&response_type=code&state=ACTIVE";
 
-                            if (!await launchUrl(Uri.parse(url))) {
-                              throw Exception('Could not launch $url');
-                            }
+                            final result = await FlutterWebAuth.authenticate(
+                              url: url,
+                              callbackUrlScheme: 'philips',
+                            );
+
+                            Uri truncatedUri = Uri.parse(result);
+
+                            try {
+                              final String? pkce =
+                                  truncatedUri.queryParameters[ApiFields.pkce];
+                              final String? code =
+                                  truncatedUri.queryParameters[ApiFields.code];
+                              final String? resState =
+                                  truncatedUri.queryParameters[ApiFields.state];
+
+                              // Handle Flutter Hue deep link
+                              if (pkce != null &&
+                                  code != null &&
+                                  resState != null) {
+                                controller.getCloudToken(code, pkce);
+                              }
+                            } catch (_) {}
                           } else {
                             controller.getDeviceDetailsAlone();
                           }
