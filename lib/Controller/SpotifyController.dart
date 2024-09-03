@@ -340,7 +340,7 @@ class SpotifyController {
       var credentials = SpotifyApiCredentials(
           AppUtility.spotifyClientId, AppUtility.spotifyClientSecret);
       var grant = SpotifyApi.authorizationCodeGrant(credentials);
-      const redirectUri = 'philips://auth';
+      const redirectUri = 'philips://callback';
 
       // Step 3: Generate authorization URL
       // var authURI = grant.getAuthorizationUrl(Uri.parse(redirectUri),

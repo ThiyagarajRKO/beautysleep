@@ -36,7 +36,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <action android:name="android.intent.action.VIEW" />
-                <data android:scheme="philips"/>
+                <data android:scheme="philips" android:host="callback"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
