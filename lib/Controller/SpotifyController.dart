@@ -1,20 +1,15 @@
 import 'dart:async';
 import 'dart:io';
-
+import 'package:flutter/material.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:phillips_hue/Utilis/AppUtility.dart';
-import 'package:phillips_hue/Utilis/theme.dart';
-import 'package:phillips_hue/api_config/ApiUrl.dart';
 import 'package:spotify/spotify.dart';
-import 'package:uni_links/uni_links.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_web_auth/flutter_web_auth.dart';
 
 final _scopes = [
   AuthorizationScope.playlist.modifyPrivate,
@@ -334,79 +329,67 @@ class SpotifyController {
 
   Future<SpotifyApi?> authenticateWithSpotify() async {
     try {
-      StreamSubscription<String?>? linksStream;
-
-      // Step 2: Create Spotify API credentials and grant
       var credentials = SpotifyApiCredentials(
           AppUtility.spotifyClientId, AppUtility.spotifyClientSecret);
       var grant = SpotifyApi.authorizationCodeGrant(credentials);
       const redirectUri = 'philips://auth';
-
-      // Step 3: Generate authorization URL
-      // var authURI = grant.getAuthorizationUrl(Uri.parse(redirectUri),
-      //     scopes: _scopes, state: deviceId);
 
       final authUri = grant.getAuthorizationUrl(
         Uri.parse(redirectUri),
         scopes: _scopes,
       );
 
-      // final initialLink = await getInitialLink();
-      // print('Initial link: $initialLink');
-      final responseUriCompleter = Completer<String>();
+      final result = await FlutterWebAuth.authenticate(
+        url: authUri.toString(),
+        callbackUrlScheme: 'philips',
+      );
 
-      linksStream = linkStream.listen((String? link) {
-        if (link != null && link.startsWith(redirectUri)) {
-          responseUriCompleter.complete(link);
-        }
-      });
-
-      // Step 4: Launch the authorization URL in the browser
-      if (!await launchUrl(authUri)) {
-        throw Exception('Could not launch $authUri');
+      // Debug log for the result URL
+      if (kDebugMode) {
+        print('Result URL: $result');
       }
 
-      String responseUri = await responseUriCompleter.future;
+      final responseUri = Uri.parse(result);
 
-      if (responseUri.contains('error')) {
+      if (responseUri.queryParameters.containsKey('error')) {
+        Fluttertoast.showToast(
+          msg: 'OAuth error: ${responseUri.queryParameters['error']}',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
         return null;
       }
 
-      SpotifyApi spotify = SpotifyApi.fromAuthCodeGrant(grant, responseUri);
-      await linksStream.cancel();
-
-      // SpotifyApiCredentials spotifyApiCredentials =
-      //     await spotify.getCredentials();
-
-      // User user = await spotify.me.get();
-
-      // await updateAccessToken(deviceId!, spotifyApiCredentials.accessToken,
-      //     spotifyApiCredentials.refreshToken, user.email);
-
-      // if (kDebugMode) {
-      //   print("Device ID : $deviceId");
-      //   print("Access Token : ${spotifyApiCredentials.accessToken}");
-      //   print("Refresh Token : ${spotifyApiCredentials.refreshToken}");
-      //   print("User Email : ${user.email}");
-      // }
-
-      // await localStorage.setString(
-      //     'accessToken', spotifyApiCredentials.accessToken!);
-
+      SpotifyApi spotify = SpotifyApi.fromAuthCodeGrant(grant, result);
       return spotify;
     } catch (e) {
-      // Step 7: Handle errors
-      if (kDebugMode) {
-        print('Authorization failed: $e');
-      }
-      Fluttertoast.showToast(
-        msg: e.toString(),
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: AppTheme.appBlack,
-        textColor: AppTheme.primaryColor,
-      );
-      return null; // Return null in case of failure
+      handleAuthorizationError(e);
+      return null;
     }
+  }
+
+  void handleAuthorizationError(Object e) {
+    String errorMessage;
+
+    if (e is Exception) {
+      errorMessage = e.toString();
+      if (errorMessage.contains('CANCELED')) {
+        errorMessage = 'Authorization process was canceled. Please try again.';
+      } else {
+        errorMessage = 'Authorization failed: $errorMessage';
+      }
+    } else {
+      errorMessage = 'An unexpected error occurred: $e';
+    }
+
+    Fluttertoast.showToast(
+      msg: errorMessage,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
   }
 }

@@ -27,7 +27,4 @@ class ApiUrl {
   static const String getDevice = "/clip/v2/resource/device";
   static const String onOffToggle = "/clip/v2/resource/light/";
   static const String username = "/api";
-
-  static const String spotifyEngineURL =
-      "https://actions.mithragopikrishnan.info/api/v1";
 }
