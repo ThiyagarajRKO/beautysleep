@@ -46,18 +46,5 @@
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
     
-    <!-- Add the following section to define the custom URL scheme -->
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLName</key>
-            <string>com.oura.oura</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>philips</string>
-            </array>
-        </dict>
-    </array>
-    
 </dict>
 </plist>
